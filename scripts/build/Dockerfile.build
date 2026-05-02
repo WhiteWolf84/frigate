@@ -1,0 +1,54 @@
+# syntax=docker/dockerfile:1.4
+# Build environment for onnxruntime-vitisai on Debian 12 (Bookworm).
+# Produces artifacts compatible with the Frigate community-script LXC
+# (same glibc 2.36, same Python 3.11).
+#
+# Usage (from repo root, on your 5800X3D):
+#   docker build -f scripts/build/Dockerfile.build \
+#                -t frigate-npu-builder \
+#                --build-arg JOBS=$(nproc) .
+#   docker run --rm -v $PWD/scripts/build/output:/output frigate-npu-builder
+
+FROM debian:12
+
+ARG JOBS=16
+ARG DEBIAN_FRONTEND=noninteractive
+ARG PYTHON_VER=3.11
+
+# ── Build dependencies ────────────────────────────────────────────────────────
+RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+    # Build tools
+    build-essential cmake ninja-build ccache git curl wget ca-certificates \
+    pkg-config autoconf automake libtool \
+    # Python
+    python3.11 python3.11-dev python3.11-venv python3-pip \
+    # ONNX Runtime deps
+    libssl-dev zlib1g-dev libffi-dev \
+    # XRT deps
+    libdrm-dev libboost-dev libboost-filesystem-dev \
+    libboost-program-options-dev libboost-system-dev \
+    libprotobuf-dev protobuf-compiler \
+    libgoogle-glog-dev libgtest-dev libgflags-dev \
+    # VAIP deps
+    libudev-dev libsystemd-dev ocl-icd-opencl-dev opencl-headers \
+    libjsoncpp-dev rapidjson-dev \
+    # Misc
+    patchelf unzip zip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Make python3.11 the default
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
+    && python3 -m pip install --upgrade pip wheel setuptools --break-system-packages
+
+# ── ccache setup ─────────────────────────────────────────────────────────────
+ENV CCACHE_DIR=/ccache CCACHE_MAXSIZE=5G
+ENV CC="ccache gcc" CXX="ccache g++"
+
+# ── Run the build script ──────────────────────────────────────────────────────
+COPY scripts/build/build_ort_vitisai.sh /build.sh
+RUN chmod +x /build.sh
+
+ENV JOBS=${JOBS}
+RUN /build.sh
+
+CMD ["bash", "-c", "cp -r /output/* /output/ 2>/dev/null; echo 'Artifacts ready in /output'"]
