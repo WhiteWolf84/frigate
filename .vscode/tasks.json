@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "pytest: amd_npu",
+      "type": "shell",
+      "command": "python -m pytest frigate/test/test_amd_npu_detector.py -v",
+      "group": "test"
+    },
+    {
+      "label": "pytest: full",
+      "type": "shell",
+      "command": "python -m pytest frigate/test -v",
+      "group": "test"
+    },
+    {
+      "label": "ruff: check",
+      "type": "shell",
+      "command": "ruff check frigate/detectors/plugins/amd_npu.py frigate/test/test_amd_npu_detector.py"
+    },
+    {
+      "label": "ruff: format",
+      "type": "shell",
+      "command": "ruff format frigate/detectors/plugins/amd_npu.py frigate/test/test_amd_npu_detector.py"
+    },
+    {
+      "label": "Verify NPU device",
+      "type": "shell",
+      "command": "ls -l /dev/accel/ && lsmod | grep amdxdna"
+    },
+    {
+      "label": "Check ONNX Runtime VitisAI",
+      "type": "shell",
+      "command": "python -c \"import onnxruntime; print('VitisAIExecutionProvider' in onnxruntime.get_available_providers())\""
+    },
+    {
+      "label": "Build amd_npu Docker image",
+      "type": "shell",
+      "command": "make local-amd_npu"
+    }
+  ]
+}

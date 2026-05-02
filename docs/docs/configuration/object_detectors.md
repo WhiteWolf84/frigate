@@ -950,6 +950,76 @@ See [ONNX supported models](#supported-models) for supported models, there are s
 - D-FINE models are not supported
 - YOLO-NAS models are known to not run well on integrated GPUs
 
+## AMD XDNA NPU detector
+
+The `amd_npu` detector targets the AMD XDNA NPU shipped on Ryzen AI APUs (Phoenix / Hawk Point / Strix). It runs inference through ONNX Runtime with the VitisAI Execution Provider. Use the `-amd-npu` Frigate image (`make local-amd_npu`).
+
+:::warning
+
+The XDNA NPU is a **separate accelerator** from the Radeon iGPU on the same APU. It is not addressable through ROCm — the ROCm/MIGraphX stack targets the iGPU only. If you want to use both, run two detectors: one `rocm` and one `amd_npu`.
+
+:::
+
+### Model requirements
+
+VAIP only accepts models that are:
+
+- **Statically shaped** — no dynamic batch / sequence dimensions.
+- **INT8 quantized** — typically QDQ or AMD Vitis AI Quantizer output.
+
+Operations that are not compiled to the NPU silently fall back to CPU. If you see `AMD NPU: VitisAI did NOT activate` in the logs, the model is running entirely on CPU; verify quantization and static shapes.
+
+### Host requirements
+
+- Linux kernel ≥ 6.10 with the `amdxdna` driver loaded (`lsmod | grep amdxdna`).
+- `/dev/accel/accel0` exists on the host (`ls -l /dev/accel/`).
+
+### Docker / LXC device passthrough
+
+```yaml
+services:
+  frigate:
+    image: ghcr.io/blakeblackshear/frigate:stable-amd-npu
+    devices:
+      - /dev/accel/accel0
+      - /dev/dri
+```
+
+For Proxmox unprivileged LXC, append to `/etc/pve/lxc/<vmid>.conf` (replace `<MAJOR>` with the value reported by `stat -c '%t' /dev/accel/accel0` on the host, in decimal):
+
+```
+lxc.cgroup2.devices.allow: c <MAJOR>:* rwm
+lxc.mount.entry: /dev/accel/accel0 dev/accel/accel0 none bind,optional,create=file
+lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
+```
+
+### Configuration
+
+```yaml
+detectors:
+  npu0:
+    type: amd_npu
+    cache_dir: /config/model_cache/vitisai
+    xclbin: /opt/xilinx/xrt/amdxdna/1x4.xclbin
+    config_file: /opt/vaip/etc/vaip_config.json
+
+model:
+  path: /config/model_cache/yolov9-s-int8.onnx
+  labelmap_path: /labelmap.txt
+  model_type: yolo-generic
+  width: 320
+  height: 320
+  input_tensor: nchw
+  input_pixel_format: rgb
+  input_dtype: float
+```
+
+Override `xclbin` and `target` (default `AMD_AIE2_4x4_Overlay`, Phoenix 4-column) for Hawk Point or Strix overlays.
+
+### Supported models
+
+`yolo-generic`, `yolox`, `yolonas`, `rfdetr`, `dfine` — same set as the `onnx` detector, but the model must be INT8-quantized for the NPU to actually engage.
+
 ## ONNX
 
 ONNX is an open format for building machine learning models, Frigate supports running ONNX models on CPU, OpenVINO, ROCm, and TensorRT. On startup Frigate will automatically try to use a GPU if one is available.

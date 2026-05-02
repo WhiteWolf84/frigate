@@ -1,0 +1,15 @@
+# onnxruntime-vitisai for AMD Phoenix NPU.
+#
+# AMD publishes this package via their own distribution channel.
+# If pip cannot resolve it from PyPI, download the wheel manually from the
+# AMD Ryzen AI installation package and vendor it here, then replace the line
+# below with:
+#   onnxruntime-vitisai @ file:///wheels/onnxruntime_vitisai-*.whl
+#
+# SDK reference: RyzenAI-SW v1.3.1
+#   Firmware archive: https://github.com/amd/RyzenAI-SW/archive/refs/tags/v1.3.1.tar.gz
+#   xclbin:      example/transformers/xclbin/phx/1x4.xclbin  (Phoenix AIE2)
+#   vaip_config: tutorial/yolov8/yolov8_python/vaip_config.json
+#
+# Target overlay: AMD_AIE2_Nx4_Overlay  (Phoenix / Ryzen 7040-8040 series)
+onnxruntime-vitisai

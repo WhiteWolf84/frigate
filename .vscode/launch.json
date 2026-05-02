@@ -8,6 +8,18 @@
       "module": "frigate"
     },
     {
+      "name": "Python: Launch Frigate (AMD NPU)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "frigate",
+      "env": {
+        "XLNX_VART_FIRMWARE": "/opt/xilinx/xrt/amdxdna/1x4.xclbin",
+        "XLNX_TARGET_NAME": "AMD_AIE2_4x4_Overlay",
+        "LD_LIBRARY_PATH": "/opt/xilinx/xrt/lib:${env:LD_LIBRARY_PATH}",
+        "FRIGATE_LOG_LEVEL": "debug"
+      }
+    },
+    {
       "type": "editor-browser",
       "request": "launch",
       "name": "Vite: Launch in integrated browser",

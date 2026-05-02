@@ -7,6 +7,9 @@ debug
 .mcp.json
 .vscode/*
 !.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
 config/*
 !config/*.example
 models

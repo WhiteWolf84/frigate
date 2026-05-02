@@ -1,0 +1,3 @@
+# The firmware blobs (1x4.xclbin and vaip_config.json) are downloaded
+# automatically by the Dockerfile from the Ryzen AI SDK tarball.
+# No manual vendoring required — this directory is kept for reference only.
